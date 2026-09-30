@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Publish a GitHub Release with this tag (e.g. v0.1.0). Leave empty for a normal build."
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -72,8 +77,12 @@ jobs:
       - name: Version
         id: ver
         shell: bash
+        env:
+          RELEASE_INPUT: ${{ github.event.inputs.release }}
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+          if [[ -n "$RELEASE_INPUT" ]]; then
+            v="${RELEASE_INPUT#v}"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             v="${GITHUB_REF#refs/tags/v}"
           else
             v="$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")-dev.${GITHUB_SHA::7}"
@@ -142,7 +151,7 @@ jobs:
 
   release:
     name: GitHub Release
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release != ''
     needs: build
     runs-on: ubuntu-latest
     permissions:
@@ -155,6 +164,10 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          # a manual run creates the tag on the built commit
+          tag_name: ${{ github.event.inputs.release || github.ref_name }}
+          target_commitish: ${{ github.sha }}
+          name: AppBridge ${{ github.event.inputs.release || github.ref_name }}
           files: artifacts/*
           generate_release_notes: true
           body: |

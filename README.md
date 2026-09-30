@@ -130,6 +130,9 @@ a GitHub Release with the files attached:
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
+Or run the **build** workflow manually from the *Actions* tab and enter a tag such as `v0.1.1` in the
+*release* field — the workflow builds, creates the tag and publishes the release.
+
 ## Project layout
 
 ```

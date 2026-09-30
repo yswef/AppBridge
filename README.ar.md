@@ -131,6 +131,13 @@ git tag v0.1.0 && git push origin v0.1.0
 
 <div dir="rtl">
 
+أو شغّل workflow ‏**build** يدويًا من تبويب *Actions* واكتب رقم الإصدار مثل `v0.1.1` في حقل *release* —
+فيبني التطبيق وينشئ الـ tag وينشر الإصدار تلقائيًا.
+
+</div>
+
+<div dir="rtl">
+
 ## الترخيص
 
 MIT — راجع [LICENSE](LICENSE). يتضمن بناء ويندوز أدوات Android SDK Platform-Tools من Google وفق
