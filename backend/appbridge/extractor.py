@@ -16,6 +16,7 @@ from .jobs import Job
 from .library import ICON_NAME, Library
 from .scanner import DATA_ROOT, OBB_ROOT, RemoteFile, apk_paths, list_remote_files, package_dump
 from .transfer import Puller, PullItem, TransferState, make_items
+from .verify import item_signing
 
 log = logging.getLogger(__name__)
 
@@ -200,4 +201,13 @@ class ExtractJob(Job):
             m["icon"] = ICON_NAME
 
     def _fill_signing(self, folder: Path, m: dict) -> None:
-        """Filled in by the verification module (signing certificates)."""
+        """Record the signing certificates and check that all split APKs share them."""
+        sig = item_signing(folder, m)
+        m["signing"] = {
+            "sha256": sig["sha256"],
+            "scheme": sig["scheme"],
+            "consistent": sig["consistent"],
+            "java_hash": sig["java_hash"],
+        }
+        if not sig["consistent"]:
+            self.warn("SPLIT_SIGNATURE_MISMATCH", str(sig["per_apk"]))

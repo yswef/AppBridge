@@ -119,9 +119,11 @@ class FakeAdb(Adb):
             for p, info in d.packages.items():
                 if pkg not in (None, "packages") and p != pkg:
                     continue
+                sigs = ", ".join(info.get("sigs", []))
                 out.append(
                     f"  Package [{p}] (abc):\n    versionCode={info.get('version_code', 1)} minSdk=21 targetSdk=33\n"
                     f"    versionName={info.get('version_name', '1.0')}\n    flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ]\n"
+                    f"    signatures=PackageSignatures{{9fbbc6c version:2, signatures:[{sigs}], past signatures:[]}}\n"
                 )
             return Result(0, "Packages:\n" + "".join(out), "")
         if cmd == "find":

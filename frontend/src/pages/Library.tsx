@@ -1,4 +1,4 @@
-import { FolderOpen, Library as LibraryIcon, Pencil, Trash2, Upload } from "lucide-react";
+import { FolderOpen, Library as LibraryIcon, Pencil, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import type { Page } from "../App";
 import { useToast } from "../components/toast";
@@ -6,7 +6,7 @@ import { Alert, AppIcon, Badge, Button, Card, EmptyState, Modal, SearchInput, Se
 import { useI18n } from "../i18n";
 import { ApiException, call } from "../lib/api";
 import { useStore } from "../lib/store";
-import type { LibraryItem } from "../lib/types";
+import type { Job, LibraryItem } from "../lib/types";
 
 type Sort = "date" | "name" | "size";
 
@@ -22,7 +22,7 @@ export function LibraryPage({
   extraActions?: (item: LibraryItem) => ReactNode;
 }) {
   const { t, fmtBytes, fmtDate, loc } = useI18n();
-  const { library, libraryRoot, libraryLoaded, reloadLibrary } = useStore();
+  const { library, libraryRoot, libraryLoaded, reloadLibrary, upsertJob } = useStore();
   const toast = useToast();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<Sort>("date");
@@ -120,6 +120,9 @@ export function LibraryPage({
                 )}
                 {extraActions?.(item)}
                 <span className="spacer" />
+                <Button size="sm" variant="ghost" icon={<ShieldCheck size={15} />} aria-label={t("library.verify")} title={t("library.verify")}
+                  disabled={item.status !== "complete"}
+                  onClick={() => run(async () => { upsertJob(await call<Job>("start_verify", item.id)); toast(t("library.verifyStarted")); })} />
                 <Button size="sm" variant="ghost" icon={<FolderOpen size={15} />} aria-label={t("library.openFolder")} title={t("library.openFolder")}
                   onClick={() => run(() => call("library_open_folder", item.id))} />
                 <Button size="sm" variant="ghost" icon={<Pencil size={15} />} aria-label={t("common.rename")} title={t("common.rename")} onClick={() => setRenaming(item)} />

@@ -121,7 +121,7 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
         </details>
       )}
 
-      {job.state === "completed" && job.kind in { extract: 1, install: 1 } && (
+      {job.state === "completed" && job.kind in { extract: 1, install: 1, verify: 1 } && (
         <Alert tone="ok">{t(`tasks.done.${job.kind}` as TKey)}</Alert>
       )}
 

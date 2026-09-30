@@ -162,4 +162,5 @@ export interface Preflight {
   installed_version_name: string | null;
   can_install: boolean;
   needs_confirmation: string[];
+  error?: ApiError;
 }

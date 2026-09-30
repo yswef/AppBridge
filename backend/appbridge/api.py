@@ -14,7 +14,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from . import APP_NAME, __version__, errors, logging_setup, paths
+from . import APP_NAME, __version__, errors, logging_setup, paths, verify
 from .adb import Adb
 from .devices import DeviceMonitor
 from .events import EventBus
@@ -345,4 +345,52 @@ class Api:
             jobs.append(job.to_dict())
         return jobs
 
-    _verifier = None
+    _verifier = staticmethod(verify.job_verifier)
+
+    @api_method
+    def install_preflight(self, item_id: int, serials: list[str], options: dict | None = None):
+        """Run the pre-install checks for each phone (version, signature, SDK, ABI, space)."""
+        options = options or {}
+        item_id = int(item_id)
+        folder = self._library.folder(item_id)
+        m = self._library.manifest(item_id)
+        if not (m.get("signing") or {}).get("java_hash") and m.get("complete"):
+            # items extracted by older builds or imported without signing info
+            sig = verify.item_signing(folder, m)
+            m["signing"] = {k: sig[k] for k in ("sha256", "scheme", "consistent", "java_hash")}
+            self._library.save_manifest(folder, m)
+        results = []
+        for serial in serials:
+            try:
+                info = self._device(serial)
+                results.append(
+                    verify.preflight(
+                        self._adb,
+                        folder,
+                        m,
+                        serial,
+                        info,
+                        include_obb=bool(options.get("include_obb", True)),
+                        include_data=bool(options.get("include_data", True)),
+                    )
+                )
+            except errors.AppBridgeError as e:
+                results.append(
+                    {
+                        "serial": serial,
+                        "device_label": serial,
+                        "checks": [],
+                        "error": e.to_dict(),
+                        "can_install": False,
+                        "needs_confirmation": [],
+                        "installed_version_code": None,
+                        "installed_version_name": None,
+                    }
+                )
+        return results
+
+    @api_method
+    def start_verify(self, item_id: int):
+        job = verify.VerifyJob.create(self._library, int(item_id))
+        self._jobs.submit(job)
+        return job.to_dict()

@@ -224,4 +224,13 @@ export const ar: Dict = {
   "install.allowDowngrade": "استبدال الإصدار الأحدث المثبت (بإزالته أولًا — ستُفقد بياناته المحلية)",
   "install.replaceIncompatible": "إزالة التطبيق ذي التوقيع المختلف أولًا (ستُفقد بياناته المحلية)",
   "install.blocked": "لا يمكن التثبيت على هذا الهاتف",
+  "install.check.ok": "سليم",
+  "install.check.running": "جارٍ الفحص…",
+  "install.confirm.downgrade": "إزالة الإصدار الأحدث أولًا ثم تثبيت هذه النسخة (ستُفقد البيانات المحلية على هذا الهاتف)",
+  "install.confirm.signature": "إزالة التطبيق ذي التوقيع المختلف أولًا (ستُفقد البيانات المحلية على هذا الهاتف)",
+  "install.needsConfirm": "أكّد أو ألغِ تحديد هذا الهاتف للمتابعة.",
+  "install.needsConfirmBadge": "يحتاج تأكيدًا",
+  "library.verify": "فحص السلامة",
+  "library.verifyStarted": "بدأ فحص السلامة.",
+  "tasks.done.verify": "كل الملفات سليمة (بصمة SHA-256 مطابقة) وكل أجزاء APK تحمل التوقيع نفسه.",
 };

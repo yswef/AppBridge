@@ -199,6 +199,29 @@ export const mockApi = {
     const it = library.find((x) => x.id === itemId)!;
     return ok(serials.map((s) => newJob("install", it.package, s, it.size, it.display_name)));
   },
+  install_preflight: (_id: number, serials: string[]) =>
+    ok(
+      serials.map((s, i) => ({
+        serial: s,
+        device_label: s,
+        installed_version_code: i ? 2029000000 : null,
+        installed_version_name: i ? "1.105.0" : null,
+        can_install: true,
+        needs_confirmation: i ? ["downgrade"] : [],
+        checks: [
+          { code: "FILES_PRESENT", level: "ok", message: { en: "All files are present.", ar: "كل الملفات موجودة." }, hint: { en: "", ar: "" }, detail: "", params: {} },
+          { code: "SPLITS_CONSISTENT", level: "ok", message: { en: "All APK parts are signed with the same certificate (v2).", ar: "كل أجزاء APK موقّعة بنفس الشهادة (v2)." }, hint: { en: "", ar: "" }, detail: "", params: {} },
+          i
+            ? { code: "DOWNGRADE", level: "warning", message: { en: "The phone has a newer version (1.105.0) than this copy (1.104.1).", ar: "الهاتف عليه إصدار أحدث (1.105.0) من هذه النسخة (1.104.1)." }, hint: { en: "Android refuses downgrades.", ar: "أندرويد يرفض التثبيت فوق إصدار أحدث." }, detail: "", params: {} }
+            : { code: "NOT_INSTALLED", level: "info", message: { en: "Not installed on this phone — fresh install.", ar: "غير مثبت على هذا الهاتف — تثبيت جديد." }, hint: { en: "", ar: "" }, detail: "", params: {} },
+          { code: "SPACE_OK", level: "ok", message: { en: "Enough free space (33.5 GB free, about 4.6 GB needed).", ar: "المساحة كافية (المتاح 33.5 GB والمطلوب قرابة 4.6 GB)." }, hint: { en: "", ar: "" }, detail: "", params: {} },
+        ],
+      })),
+    ),
+  start_verify: (id: number) => {
+    const it = library.find((x) => x.id === id)!;
+    return ok(newJob("verify", it.package, "", it.size, it.display_name));
+  },
   library_list: () => ok({ root: settings.library_dir, items: library }),
   library_rename: (id: number, name: string) => {
     const it = library.find((x) => x.id === id)!;

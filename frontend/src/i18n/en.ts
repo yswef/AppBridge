@@ -222,6 +222,15 @@ export const en = {
   "install.allowDowngrade": "Replace the newer installed version (uninstall first — its local data will be lost)",
   "install.replaceIncompatible": "Uninstall the differently-signed app first (its local data will be lost)",
   "install.blocked": "Cannot install on this phone",
+  "install.check.ok": "OK",
+  "install.check.running": "Checking…",
+  "install.confirm.downgrade": "Uninstall the newer version first, then install this copy (local data on this phone will be lost)",
+  "install.confirm.signature": "Uninstall the differently-signed app first (local data on this phone will be lost)",
+  "install.needsConfirm": "Confirm or untick this phone to continue.",
+  "install.needsConfirmBadge": "Needs confirmation",
+  "library.verify": "Verify integrity",
+  "library.verifyStarted": "Integrity check started.",
+  "tasks.done.verify": "All files are intact (SHA-256 matches) and all APK parts share the same signature.",
 };
 
 export type Dict = typeof en;

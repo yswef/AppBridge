@@ -3,6 +3,8 @@ import json
 import time
 
 import pytest
+from apkfactory import make_cert, signed_apk
+from cryptography.hazmat.primitives.serialization import Encoding
 from fakeadb import FakeAdb, FakeDevice
 
 from appbridge import extractor
@@ -12,13 +14,14 @@ from appbridge.library import Library
 
 PKG = "com.dts.freefireth"
 APK_DIR = "/data/app/~~ab==/com.dts.freefireth-1=="
+CERT_DER = make_cert("Free Fire test")[1].public_bytes(Encoding.DER)
 
 
 def make_phone(tmp_path, serial="S1"):
     adb = FakeAdb()
     dev = adb.add(FakeDevice(serial, tmp_path / f"phone-{serial}"))
-    dev.add_file(f"{APK_DIR}/base.apk", b"A" * 5000)
-    dev.add_file(f"{APK_DIR}/split_config.arm64_v8a.apk", b"B" * 3000)
+    dev.add_file(f"{APK_DIR}/base.apk", signed_apk(CERT_DER, entries={"AndroidManifest.xml": b"A" * 5000}))
+    dev.add_file(f"{APK_DIR}/split_config.arm64_v8a.apk", signed_apk(CERT_DER, entries={"lib/arm64-v8a/x.so": b"B"}))
     dev.add_file(f"/sdcard/Android/obb/{PKG}/main.2019117233.{PKG}.obb", b"O" * 20000)
     dev.add_file(
         f"/sdcard/Android/data/{PKG}/files/contentcache/Optional/android/gameassetbundles/a.unity3d", b"D1" * 100
@@ -60,6 +63,8 @@ def test_full_extract_into_arabic_library_path(tmp_path):
     assert "data/files/ملف عربي.txt" in {f["path"] for f in m["files"]}
     assert m["remote_roots"]["apk"] == APK_DIR
     assert "internal_data_not_included" in m["notes"]
+    assert m["signing"]["scheme"] == "v2" and m["signing"]["consistent"]
+    assert m["signing"]["sha256"] == [hashlib.sha256(CERT_DER).hexdigest()]
     assert job.progress.done == job.progress.total > 0
     assert not (lib.folder(item["id"]) / ".appbridge-state.json").exists()
     assert json.loads((lib.folder(item["id"]) / "manifest.json").read_text(encoding="utf-8"))["complete"] is True
