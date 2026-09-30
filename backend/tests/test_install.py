@@ -1,3 +1,4 @@
+import os
 import time
 
 from fakeadb import FakeDevice
@@ -32,7 +33,7 @@ def test_install_single_phone(tmp_path):
     job = run_job(jm, InstallJob(adb, lib, item_id, "T1", dev_info(t)))
     assert job.state == "completed", job.error
     ((apks, flags),) = t.installed
-    assert [a.rsplit("/", 1)[-1] for a in apks][0] == "base.apk"
+    assert os.path.basename(apks[0]) == "base.apk"
     assert len(apks) == 2 and flags == ["-r"]
     obb = t.local(f"/sdcard/Android/obb/{PKG}/main.2019117233.{PKG}.obb")
     assert obb.read_bytes() == b"O" * 20000

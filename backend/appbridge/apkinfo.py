@@ -63,6 +63,7 @@ def _find_bitmap_icon(zf: zipfile.ZipFile, icon_path: str | None) -> bytes | Non
 
 def read_apk_meta(path: Path) -> ApkMeta:
     meta = ApkMeta()
+    apk = None
     try:
         from pyaxmlparser import APK
 
@@ -91,6 +92,11 @@ def read_apk_meta(path: Path) -> ApkMeta:
             meta.icon = _find_bitmap_icon(zf, icon_path)
     except Exception as e:  # noqa: BLE001 - metadata is optional
         log.warning("Could not parse APK metadata from %s: %s", path, e)
+    finally:
+        # pyaxmlparser keeps the zip open; on Windows that would lock the APK (delete/move fails).
+        zf_open = getattr(apk, "zip", None)
+        if zf_open is not None:
+            zf_open.close()
     if meta.label and meta.label.startswith("@"):
         meta.label = ""
     if meta.icon and not _is_image(meta.icon):
