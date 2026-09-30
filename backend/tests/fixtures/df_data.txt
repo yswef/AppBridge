@@ -1,0 +1,2 @@
+Filesystem      1K-blocks     Used Available Use% Mounted on
+/dev/block/dm-45 115234560 80123456  35111104  70% /data

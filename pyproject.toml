@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "appbridge"
+version = "0.1.0"
+description = "Copy Android apps and games (APK, split APKs, OBB, external data) from one phone to others over USB."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "yswef alhmzy", email = "yswefalhmzy@gmail.com" }]
+dependencies = [
+  "pywebview>=5.0",
+  "pyaxmlparser>=0.3.28",
+  "cryptography>=41",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5", "pyinstaller>=6.5"]
+
+[tool.setuptools]
+package-dir = { "" = "backend" }
+packages = ["appbridge"]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+pythonpath = ["backend"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["backend"]
+extend-exclude = ["frontend", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = ["SIM105", "SIM108"]
