@@ -45,15 +45,37 @@ def main() -> int:
     if bundle_arg:
         window.events.loaded += lambda: api.import_bundle(bundle_arg)
     try:
-        webview.start(
-            debug=bool(os.environ.get("APPBRIDGE_DEBUG")),
-            private_mode=True,
-            gui="edgechromium" if sys.platform == "win32" else None,
+        _start(webview)
+    except Exception:  # noqa: BLE001 - most often a missing WebView2 runtime
+        log.exception("Could not start the window")
+        _fatal(
+            "AppBridge could not open its window. Install the Microsoft Edge WebView2 Runtime "
+            "(https://go.microsoft.com/fwlink/p/?LinkId=2124703) and try again.\n\n"
+            "تعذر على AppBridge فتح نافذته. ثبّت Microsoft Edge WebView2 Runtime ثم حاول مرة أخرى."
         )
+        return 1
     finally:
         api._shutdown()
         api._adb.kill_server()
     return 0
+
+
+def _start(webview) -> None:
+    webview.start(
+        debug=bool(os.environ.get("APPBRIDGE_DEBUG")),
+        private_mode=True,
+        http_server=True,  # serve the built UI over a local-only HTTP server (ES modules need it)
+        gui="edgechromium" if sys.platform == "win32" else None,
+    )
+
+
+def _fatal(message: str) -> None:
+    if sys.platform == "win32":
+        import ctypes
+
+        ctypes.windll.user32.MessageBoxW(None, message, APP_NAME, 0x10)
+    else:
+        print(message, file=sys.stderr)
 
 
 if __name__ == "__main__":

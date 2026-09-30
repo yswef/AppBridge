@@ -1,0 +1,165 @@
+name: build
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Lint & tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyaxmlparser "cryptography>=41" pytest ruff
+
+      - name: Ruff
+        run: |
+          ruff check backend tools
+          ruff format --check backend tools
+
+      - name: Pytest
+        run: pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend typecheck & build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+  build:
+    name: Windows build
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Version
+        id: ver
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            v="${GITHUB_REF#refs/tags/v}"
+          else
+            v="$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")-dev.${GITHUB_SHA::7}"
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Building $v"
+
+      - name: Build UI
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Bundle official platform-tools (adb)
+        run: python tools/fetch_platform_tools.py --os windows
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install . pyinstaller
+
+      - name: Stamp version
+        shell: bash
+        run: |
+          v="${{ steps.ver.outputs.version }}"
+          sed -i "s/^__version__ = .*/__version__ = \"$v\"/" backend/appbridge/__init__.py
+
+      - name: PyInstaller (onedir)
+        run: pyinstaller packaging/appbridge.spec --noconfirm --clean
+
+      - name: Smoke test bundled adb
+        run: dist\AppBridge\_internal\platform-tools\adb.exe version
+
+      - name: Portable zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType File -Path dist/AppBridge/portable.txt.example -Force | Out-Null
+          Compress-Archive -Path dist/AppBridge -DestinationPath "dist/AppBridge-${{ steps.ver.outputs.version }}-win64-portable.zip" -CompressionLevel Optimal
+
+      - name: Installer (Inno Setup)
+        shell: pwsh
+        run: |
+          if (-not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            $inno = "${env:ProgramFiles(x86)}\Inno Setup 6"
+            if (-not (Test-Path "$inno\ISCC.exe")) { choco install innosetup -y --no-progress }
+            $env:Path += ";$inno"
+          }
+          iscc /DMyAppVersion=${{ steps.ver.outputs.version }} packaging\installer.iss
+
+      - name: Checksums
+        shell: pwsh
+        run: |
+          Get-ChildItem dist -File | Where-Object { $_.Name -match '\.(zip|exe)$' } |
+            ForEach-Object { "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name } |
+            Set-Content -Encoding ascii dist/SHA256SUMS.txt
+          Get-Content dist/SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AppBridge-${{ steps.ver.outputs.version }}
+          path: |
+            dist/*.zip
+            dist/*-setup.exe
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+
+  release:
+    name: GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          body: |
+            **Windows 10/11 (64-bit).** Download the `-setup.exe` installer or the portable `.zip`.
+            The files are not code-signed, so Windows SmartScreen may warn: click *More info* → *Run anyway*.
+
+            **ويندوز 10/11 (64 بت).** نزّل المثبّت `-setup.exe` أو النسخة المحمولة `.zip`.
+            الملفات غير موقّعة رقميًا، لذا قد يظهر تحذير SmartScreen: اضغط «مزيد من المعلومات» ثم «التشغيل على أي حال».
