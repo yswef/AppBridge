@@ -22,6 +22,7 @@ class Settings:
     include_install_bat: bool = True
     verify_before_install: bool = True
     show_system_apps: bool = False
+    welcome_done: bool = False
 
 
 class SettingsStore:

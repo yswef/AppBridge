@@ -238,6 +238,19 @@ export const en = {
   "tasks.done.export": "Bundle saved:",
   "tasks.done.import": "Imported into the library.",
   "tasks.showFile": "Show file",
+  "welcome.title": "Welcome to AppBridge",
+  "welcome.body": "Copy a game once, then install it on your friends' phones over USB — no re-downloading.",
+  "welcome.step1": "Connect the phone that has the game and allow USB debugging.",
+  "welcome.step2": "Open Phone apps, pick the game and press “Extract to library”.",
+  "welcome.step3": "Connect the other phone(s) and press “Install” in the Library. Several phones can be installed at once.",
+  "welcome.legal": "AppBridge copies apps exactly as they are, for personal use. Share only apps you are allowed to share. Logins and saved progress (/data/data) are not copied.",
+  "welcome.start": "Get started",
+  "devices.noperm.body": "Windows cannot talk to the phone. Install the phone maker's USB driver, then reconnect the cable.",
+  "tasks.active": "Running",
+  "tasks.finished": "Finished",
+  "error.title": "Something went wrong",
+  "error.body": "The interface hit an unexpected error. Reload it; your running tasks keep going in the background.",
+  "error.reload": "Reload",
 };
 
 export type Dict = typeof en;

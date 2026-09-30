@@ -131,6 +131,7 @@ export interface Settings {
   include_install_bat: boolean;
   verify_before_install: boolean;
   show_system_apps: boolean;
+  welcome_done: boolean;
 }
 
 export interface AppInfo {

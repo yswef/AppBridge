@@ -58,6 +58,8 @@ function DeviceCard({ d, onBrowse }: { d: Device; onBrowse: (serial: string) => 
         <Alert tone="warn" title={t("devices.unauthorized.title")}>
           {t("devices.unauthorized.body")}
         </Alert>
+      ) : d.state === "no permissions" ? (
+        <Alert tone="err">{t("devices.noperm.body")}</Alert>
       ) : (
         <Alert tone="err">{t("devices.offline.body")}</Alert>
       )}

@@ -6,7 +6,9 @@ import { systemLang, useI18n } from "./i18n";
 import type { TKey } from "./i18n/en";
 import type { LibraryItem } from "./lib/types";
 import { useStore } from "./lib/store";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { InstallModal } from "./components/InstallModal";
+import { Welcome } from "./components/Welcome";
 import { AboutPage } from "./pages/About";
 import { AppsPage } from "./pages/Apps";
 import { DevicesPage } from "./pages/Devices";
@@ -94,6 +96,7 @@ export function App() {
         </div>
       </aside>
       <main className="main">
+        <ErrorBoundary key={page}>
         {page === "devices" && (
           <DevicesPage
             onBrowse={(s) => {
@@ -107,7 +110,9 @@ export function App() {
         {page === "tasks" && <TasksPage />}
         {page === "settings" && <SettingsPage />}
         {page === "about" && <AboutPage />}
+        </ErrorBoundary>
       </main>
+      <Welcome />
       {installing && (
         <InstallModal
           item={installing}

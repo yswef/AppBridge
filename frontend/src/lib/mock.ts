@@ -12,6 +12,7 @@ const settings: Settings = {
   include_install_bat: true,
   verify_before_install: true,
   show_system_apps: false,
+  welcome_done: false,
 };
 
 const device = (serial: string, model: string, extra: Partial<Device> = {}): Device => ({

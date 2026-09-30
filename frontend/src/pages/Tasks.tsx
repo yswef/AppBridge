@@ -29,9 +29,16 @@ export function TasksPage() {
         </Card>
       ) : (
         <div className="col" style={{ gap: 12 }}>
-          {jobs.map((j) => (
+          {activeJobs.length > 0 && <h2 className="section-title">{t("tasks.active")}</h2>}
+          {activeJobs.map((j) => (
             <JobCard key={j.id} job={j} />
           ))}
+          {finished > 0 && <h2 className="section-title">{t("tasks.finished")}</h2>}
+          {jobs
+            .filter((j) => !activeJobs.includes(j))
+            .map((j) => (
+              <JobCard key={j.id} job={j} />
+            ))}
         </div>
       )}
     </div>
