@@ -4,7 +4,9 @@ import logo from "./logo.svg";
 import { Button } from "./components/ui";
 import { systemLang, useI18n } from "./i18n";
 import type { TKey } from "./i18n/en";
+import type { LibraryItem } from "./lib/types";
 import { useStore } from "./lib/store";
+import { InstallModal } from "./components/InstallModal";
 import { AboutPage } from "./pages/About";
 import { AppsPage } from "./pages/Apps";
 import { DevicesPage } from "./pages/Devices";
@@ -36,6 +38,7 @@ export function App() {
   const { settings, updateSettings } = useStore();
   const [page, setPage] = useState<Page>("devices");
   const [serial, setSerial] = useState<string | null>(null);
+  const [installing, setInstalling] = useState<LibraryItem | null>(null);
   const dark = useTheme();
 
   useEffect(() => {
@@ -100,11 +103,21 @@ export function App() {
           />
         )}
         {page === "apps" && <AppsPage serial={serial} onSerial={setSerial} onNavigate={go} />}
-        {page === "library" && <LibraryPage onNavigate={go} />}
+        {page === "library" && <LibraryPage onNavigate={go} onInstall={setInstalling} />}
         {page === "tasks" && <TasksPage />}
         {page === "settings" && <SettingsPage />}
         {page === "about" && <AboutPage />}
       </main>
+      {installing && (
+        <InstallModal
+          item={installing}
+          onClose={() => setInstalling(null)}
+          onStarted={() => {
+            setInstalling(null);
+            go("tasks");
+          }}
+        />
+      )}
     </div>
   );
 }

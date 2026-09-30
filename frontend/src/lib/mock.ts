@@ -195,6 +195,10 @@ export const mockApi = {
     for (const [id, j] of Object.entries(jobs)) if (["completed", "failed", "cancelled"].includes(j.state)) delete jobs[id];
     return ok(true);
   },
+  start_install: (itemId: number, serials: string[]) => {
+    const it = library.find((x) => x.id === itemId)!;
+    return ok(serials.map((s) => newJob("install", it.package, s, it.size, it.display_name)));
+  },
   library_list: () => ok({ root: settings.library_dir, items: library }),
   library_rename: (id: number, name: string) => {
     const it = library.find((x) => x.id === id)!;

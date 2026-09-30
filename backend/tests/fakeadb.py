@@ -25,7 +25,7 @@ class FakeDevice:
         self.deny_data_write = False
         self.free_kb = 50_000_000
         self.fail_after_pulls: int | None = None
-        self.install_failure: str | None = None
+        self.install_failures: list[str] = []
         self.launched: list[str] = []
         root.mkdir(parents=True, exist_ok=True)
 
@@ -217,10 +217,15 @@ class FakeAdb(Adb):
             if on_tick:
                 on_tick()
 
-    def push(self, serial, locals_, remote_dir, cancel=None, on_tick=None):
+    def push(self, serial, locals_, remote_dir, cancel=None, on_tick=None, to_file=False):
         d = self._dev(serial)
+        self.pushed = getattr(self, "pushed", []) + [str(p) for p in locals_]
         if "/Android/data/" in remote_dir and d.deny_data_write:
             raise AppBridgeError("PERMISSION_DENIED", "remote couldn't create file: Permission denied")
+        if to_file:
+            d.local(remote_dir).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(locals_[0], d.local(remote_dir))
+            return
         dest = d.local(remote_dir)
         dest.mkdir(parents=True, exist_ok=True)
         for p in locals_:
@@ -235,8 +240,11 @@ class FakeAdb(Adb):
 
     def install_multiple(self, serial, apks, flags, cancel=None, on_tick=None):
         d = self._dev(serial)
-        if d.install_failure:
-            fail, d.install_failure = d.install_failure, None
+        if d.install_failures:
+            fail = d.install_failures.pop(0)
             return Result(1, "", f"adb: failed to finalize session\nFailure [{fail}]\n")
         d.installed.append(([str(a) for a in apks], list(flags)))
+        pkg = getattr(self, "install_package", None)
+        if pkg:
+            d.packages[pkg] = {"apks": [f"/data/app/~~n==/{pkg}-1==/base.apk"], "version_code": self.install_version}
         return Result(0, "Success\n", "")

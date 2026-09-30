@@ -207,6 +207,21 @@ export const en = {
   "library.splits": "{n} APKs",
   "library.incompleteHint": "This extraction did not finish. Connect the source phone and extract again to resume.",
   "library.folder": "Library folder: ",
+  "install.title": "Install “{name}”",
+  "install.pickDevices": "Choose the phones to install on",
+  "install.noDevices": "No ready phone is connected. Connect the target phone(s) with USB debugging enabled.",
+  "install.options": "Options",
+  "install.opt.obb": "Copy OBB files",
+  "install.opt.data": "Copy Android/data (game resources)",
+  "install.opt.verify": "Verify file integrity (SHA-256) first",
+  "install.start": "Install on {n} phone(s)",
+  "install.started": "Installation started on {n} phone(s).",
+  "install.sourcePhone": "source phone",
+  "install.checking": "Checking the phone…",
+  "install.checks": "Checks",
+  "install.allowDowngrade": "Replace the newer installed version (uninstall first — its local data will be lost)",
+  "install.replaceIncompatible": "Uninstall the differently-signed app first (its local data will be lost)",
+  "install.blocked": "Cannot install on this phone",
 };
 
 export type Dict = typeof en;

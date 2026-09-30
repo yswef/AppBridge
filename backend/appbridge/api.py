@@ -19,6 +19,7 @@ from .adb import Adb
 from .devices import DeviceMonitor
 from .events import EventBus
 from .extractor import ExtractJob
+from .installer import InstallJob
 from .jobs import Job, JobManager
 from .library import Library
 from .scanner import app_details, list_apps
@@ -312,3 +313,36 @@ class Api:
         path = self._library.folder(int(item_id)) if item_id is not None else self._library.root
         open_in_explorer(path)
         return str(path)
+
+    # -- install -----------------------------------------------------------------------------
+
+    @api_method
+    def start_install(self, item_id: int, serials: list[str], options: dict | None = None):
+        """Start one independent install job per phone."""
+        options = options or {}
+        item_id = int(item_id)
+        row = self._library.item(item_id)
+        if row["status"] != "complete":
+            raise errors.AppBridgeError("LIBRARY_ITEM_INCOMPLETE")
+        jobs = []
+        for serial in serials:
+            info = self._device(serial)
+            per = (options.get("per_device") or {}).get(serial, {})
+            job = InstallJob(
+                self._adb,
+                self._library,
+                item_id,
+                serial,
+                info,
+                verify=bool(options.get("verify", self._settings.settings.verify_before_install)),
+                allow_downgrade=bool(per.get("allow_downgrade", options.get("allow_downgrade", False))),
+                replace_incompatible=bool(per.get("replace_incompatible", False)),
+                include_obb=bool(options.get("include_obb", True)),
+                include_data=bool(options.get("include_data", True)),
+                verifier=self._verifier,
+            )
+            self._jobs.submit(job)
+            jobs.append(job.to_dict())
+        return jobs
+
+    _verifier = None

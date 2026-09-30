@@ -13,11 +13,12 @@ import logging
 import os
 import posixpath
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
-from .adb import Adb
+from .adb import Adb, rquote
 from .errors import AppBridgeError, CancelledError, DeviceGoneError
 from .fsutil import file_size, long_path, safe_relpath, sha256_file
 from .jobs import Job
@@ -221,4 +222,97 @@ class Puller:
             self.completed_bytes += it.size
             self.job.progress.files_done += 1
             self.job.progress.set_done(self.completed_bytes)
+        self.job.changed()
+
+
+@dataclass
+class PushItem:
+    local: Path
+    remote: str  # full remote file path
+    size: int
+
+
+def _group_push(items: list[PushItem]) -> list[list[PushItem]]:
+    groups: list[list[PushItem]] = []
+    batches: dict[tuple[str, str], list[PushItem]] = {}
+    for it in items:
+        if it.size >= BIG_FILE or it.local.name != posixpath.basename(it.remote):
+            groups.append([it])
+            continue
+        key = (str(it.local.parent), posixpath.dirname(it.remote))
+        batch = batches.setdefault(key, [])
+        chars = sum(len(str(b.local)) + 3 for b in batch)
+        if len(batch) >= MAX_BATCH_FILES or chars + len(str(it.local)) > MAX_BATCH_CHARS:
+            groups.append(batch)
+            batch = batches[key] = []
+        batch.append(it)
+    groups.extend(b for b in batches.values() if b)
+    return groups
+
+
+class Pusher:
+    """Push files to the device; files already present with the right size are skipped (resume)."""
+
+    def __init__(self, adb: Adb, job: Job, serial: str):
+        self.adb = adb
+        self.job = job
+        self.serial = serial
+        self.completed_bytes = 0
+
+    def remote_sizes(self, root: str) -> dict[str, int]:
+        from .scanner import list_remote_files
+
+        files, _ = list_remote_files(self.adb, self.serial, root)
+        return {f.remote: f.size for f in files}
+
+    def push_all(self, items: list[PushItem], root: str, base_done: int = 0) -> None:
+        self.completed_bytes = base_done
+        existing = self.job.with_reconnect(self.adb, lambda: self.remote_sizes(root))
+        pending = []
+        for it in items:
+            if existing.get(it.remote) == it.size:
+                self.completed_bytes += it.size
+                self.job.progress.files_done += 1
+            else:
+                pending.append(it)
+        self.job.progress.set_done(self.completed_bytes)
+        self.job.changed()
+        made_dirs: set[str] = set()
+        for group in _group_push(pending):
+            self.job.check_cancel()
+            self.job.with_reconnect(self.adb, lambda g=group: self._push_group(g, made_dirs))
+
+    def _push_group(self, group: list[PushItem], made_dirs: set[str]) -> None:
+        remote_dir = posixpath.dirname(group[0].remote)
+        if remote_dir not in made_dirs:
+            r = self.adb.shell(self.serial, f"mkdir -p {rquote(remote_dir)} 2>&1")
+            if r.rc != 0:
+                code = "PERMISSION_DENIED" if "denied" in r.text.lower() else "UNKNOWN"
+                raise AppBridgeError(code, r.text)
+            made_dirs.add(remote_dir)
+        self.job.progress.current = group[0].remote if len(group) == 1 else remote_dir
+        total = sum(i.size for i in group)
+        last = {"t": 0.0, "v": 0}
+
+        def tick() -> None:
+            # For a single big file, sample the remote size about once per second.
+            if len(group) == 1 and group[0].size >= BIG_FILE:
+                now = time.monotonic()
+                if now - last["t"] >= 1.0:
+                    last["t"] = now
+                    try:
+                        r = self.adb.shell(self.serial, f"stat -c %s {rquote(group[0].remote)} 2>/dev/null", timeout=5)
+                        last["v"] = min(total, int(r.out.strip() or 0))
+                    except (AppBridgeError, ValueError):
+                        pass
+                self.job.progress.set_done(self.completed_bytes + last["v"])
+                self.job.changed()
+
+        if len(group) == 1 and group[0].local.name != posixpath.basename(group[0].remote):
+            self.adb.push(self.serial, [group[0].local], group[0].remote, self.job.cancel_event, tick, to_file=True)
+        else:
+            self.adb.push(self.serial, [i.local for i in group], remote_dir, self.job.cancel_event, tick)
+        self.completed_bytes += total
+        self.job.progress.files_done += len(group)
+        self.job.progress.set_done(self.completed_bytes)
         self.job.changed()

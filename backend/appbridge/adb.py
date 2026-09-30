@@ -357,8 +357,11 @@ class Adb:
         remote_dir: str,
         cancel: threading.Event | None = None,
         on_tick: TickFn | None = None,
+        to_file: bool = False,
     ) -> None:
-        r = self.run_long(["push", *[str(p) for p in locals_], remote_dir.rstrip("/") + "/"], serial, cancel, on_tick)
+        """Push files into ``remote_dir`` (or to the exact remote file path when ``to_file``)."""
+        dest = remote_dir if to_file else remote_dir.rstrip("/") + "/"
+        r = self.run_long(["push", *[str(p) for p in locals_], dest], serial, cancel, on_tick)
         self._check_transfer(r, serial)
 
     def install_multiple(
