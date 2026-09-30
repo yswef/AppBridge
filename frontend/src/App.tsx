@@ -110,7 +110,8 @@ export function App() {
 }
 
 function NavCount({ page }: { page: Page }) {
-  const { devices } = useStore();
+  const { devices, activeJobs } = useStore();
+  if (page === "tasks") return activeJobs.length ? <span className="count">{activeJobs.length}</span> : null;
   if (page === "devices") {
     const n = devices.filter((d) => d.state === "device").length;
     return n ? <span className="count">{n}</span> : null;

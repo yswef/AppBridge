@@ -1,0 +1,4 @@
+package:/data/app/~~Qx1a2b==/com.dts.freefireth-AbCd12==/base.apk=com.dts.freefireth uid:10245
+package:/data/app/~~Zz9y==/com.whatsapp-Xy==/base.apk=com.whatsapp uid:10198
+package:/data/app/~~k==/com.example.my=app-1==/base.apk=com.example.weird uid:10300
+package:/system/priv-app/Settings/Settings.apk=com.android.settings uid:1000

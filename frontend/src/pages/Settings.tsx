@@ -9,7 +9,7 @@ import type { Settings } from "../lib/types";
 
 export function SettingsPage() {
   const { t, loc } = useI18n();
-  const { settings, updateSettings } = useStore();
+  const { settings, updateSettings, reloadSettings, reloadLibrary } = useStore();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   if (!settings) return null;
@@ -27,7 +27,8 @@ export function SettingsPage() {
     try {
       const r = await call<Settings | null>("choose_library_dir");
       if (r) {
-        await updateSettings({});
+        await reloadSettings();
+        await reloadLibrary();
         toast(t("settings.saved"));
       }
     } catch (e) {
@@ -107,10 +108,6 @@ export function SettingsPage() {
           <div className="setting">
             <div className="label">{t("settings.verifyBeforeInstall")}</div>
             <Switch on={settings.verify_before_install} onChange={(v) => save({ verify_before_install: v })} />
-          </div>
-          <div className="setting">
-            <div className="label">{t("settings.showSystem")}</div>
-            <Switch on={settings.show_system_apps} onChange={(v) => save({ show_system_apps: v })} />
           </div>
           <div className="setting">
             <div className="label">{t("settings.includeBat")}</div>

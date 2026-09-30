@@ -42,7 +42,7 @@ export function I18nProvider({ initial, children }: { initial: Lang; children: R
   );
 
   const value = useMemo<I18n>(() => {
-    const locale = lang === "ar" ? "ar-EG" : "en-US";
+    const locale = lang === "ar" ? "ar-EG-u-nu-latn" : "en-US";
     const nf = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
     const units = lang === "ar" ? ["بايت", "ك.ب", "م.ب", "غ.ب", "ت.ب"] : ["B", "KB", "MB", "GB", "TB"];
     return {

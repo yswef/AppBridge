@@ -1,0 +1,32 @@
+Packages:
+  Package [com.dts.freefireth] (4b2f1a0):
+    userId=10245
+    pkg=Package{8a1c2e com.dts.freefireth}
+    codePath=/data/app/~~Qx1a2b==/com.dts.freefireth-AbCd12==
+    resourcePath=/data/app/~~Qx1a2b==/com.dts.freefireth-AbCd12==
+    primaryCpuAbi=arm64-v8a
+    versionCode=2019117233 minSdk=21 targetSdk=33
+    minExtensionVersions=[]
+    versionName=1.104.1
+    flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ALLOW_BACKUP LARGE_HEAP ]
+    privateFlags=[ PRIVATE_FLAG_ACTIVITIES_RESIZE_MODE_RESIZEABLE ]
+    User 0: ceDataInode=12345 installed=true
+  Package [com.whatsapp] (1c2d3e4):
+    codePath=/data/app/~~Zz9y==/com.whatsapp-Xy==
+    versionCode=242114006 minSdk=21 targetSdk=34
+    versionName=2.24.21.6
+    flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ]
+  Package [com.android.settings] (aaaa):
+    codePath=/system/priv-app/Settings
+    versionCode=34 minSdk=34 targetSdk=34
+    versionName=14
+    flags=[ SYSTEM HAS_CODE PERSISTENT ]
+
+Hidden system packages:
+  Package [com.android.settings] (bbbb):
+    codePath=/system/priv-app/SettingsOld
+    versionCode=1 minSdk=1 targetSdk=1
+    versionName=old
+
+Package Changes:
+  Sequence number=12

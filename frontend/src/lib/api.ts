@@ -70,6 +70,8 @@ const listeners = new Map<string, Set<Listener>>();
 
 window.__appbridgeEvent = ({ event, payload }) => {
   listeners.get(event)?.forEach((l) => l(payload));
+  const colon = event.indexOf(":");
+  if (colon > 0) listeners.get(event.slice(0, colon) + ":*")?.forEach((l) => l(payload));
 };
 
 export function onEvent(event: string, fn: Listener): () => void {

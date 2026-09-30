@@ -44,6 +44,8 @@ class FakeAdb(Adb):
         self.path = Path("fake-adb")
         self.devices_map: dict[str, FakeDevice] = {}
         self.pull_count = 0
+        self.pulled: list[str] = []
+        self.pull_delay = 0.0
         self.lock = threading.Lock()
 
     @property
@@ -84,6 +86,8 @@ class FakeAdb(Adb):
     def shell(self, serial, command, timeout=60, check=False):
         d = self._dev(serial)
         r = self._shell(d, command)
+        if "2>&1" in command:
+            r = Result(r.rc, r.out + r.err, "")
         if check and r.rc != 0:
             raise AppBridgeError("UNKNOWN", r.text)
         return r
@@ -139,14 +143,26 @@ class FakeAdb(Adb):
                 return Result(1, "", f"ls: {target}: Permission denied\n")
             return Result(0 if d.local(target).exists() else 1, "", "")
         if cmd == "stat":
-            p = d.local(argv[-1])
-            if not p.exists():
-                return Result(1, "", "No such file")
-            return Result(0, f"{p.stat().st_size}|{int(p.stat().st_mtime)}|{argv[-1]}\n", "")
+            out, rc = [], 0
+            for a in argv[3:]:
+                p = d.local(a)
+                if not p.exists():
+                    rc = 1
+                    continue
+                out.append(f"{p.stat().st_size}|{int(p.stat().st_mtime)}|{a}")
+            return Result(rc, "\n".join(out) + "\n", "")
         if cmd == "du":
             total = 0
             outs = []
+            targets = []
             for t in argv[2:]:
+                if t.endswith("/*"):
+                    base = d.local(t[:-2])
+                    if base.is_dir():
+                        targets += [t[:-1] + c.name for c in sorted(base.iterdir())]
+                else:
+                    targets.append(t)
+            for t in targets:
                 p = d.local(t)
                 if p.exists():
                     size = (
@@ -176,7 +192,8 @@ class FakeAdb(Adb):
 
     def pull(self, serial, remotes, local_dir, cancel=None, on_tick=None, progress_probe=None):
         d = self._dev(serial)
-        local_dir.mkdir(parents=True, exist_ok=True)
+        to_file = len(remotes) == 1 and not local_dir.is_dir()
+        (local_dir.parent if to_file else local_dir).mkdir(parents=True, exist_ok=True)
         for r in remotes:
             if cancel is not None and cancel.is_set():
                 raise CancelledError()
@@ -185,9 +202,18 @@ class FakeAdb(Adb):
                     d.state = "offline"
                     raise DeviceGoneError("device offline")
                 self.pull_count += 1
+                self.pulled.append(r)
+            if self.pull_delay:
+                import time
+
+                end = time.monotonic() + self.pull_delay
+                while time.monotonic() < end:
+                    if cancel is not None and cancel.is_set():
+                        raise CancelledError()
+                    time.sleep(0.01)
             if "/Android/data/" in r and d.deny_data_read:
                 raise AppBridgeError("PERMISSION_DENIED", "Permission denied")
-            shutil.copy2(d.local(r), local_dir / os.path.basename(r))
+            shutil.copy2(d.local(r), local_dir if to_file else local_dir / os.path.basename(r))
             if on_tick:
                 on_tick()
 

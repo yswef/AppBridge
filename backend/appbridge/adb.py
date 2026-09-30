@@ -330,14 +330,18 @@ class Adb:
         self,
         serial: str,
         remotes: Sequence[str],
-        local_dir: Path,
+        dest: Path,
         cancel: threading.Event | None = None,
         on_tick: TickFn | None = None,
         progress_probe: Callable[[], int] | None = None,
     ) -> None:
-        local_dir.mkdir(parents=True, exist_ok=True)
+        """Pull ``remotes`` into directory ``dest`` (or to file ``dest`` for a single remote)."""
+        if len(remotes) > 1 or dest.is_dir():
+            dest.mkdir(parents=True, exist_ok=True)
+        else:
+            dest.parent.mkdir(parents=True, exist_ok=True)
         r = self.run_long(
-            ["pull", "-a", *remotes, str(local_dir)],
+            ["pull", "-a", *remotes, str(dest)],
             serial,
             cancel,
             on_tick,
