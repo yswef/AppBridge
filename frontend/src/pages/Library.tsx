@@ -1,4 +1,4 @@
-import { FolderOpen, Library as LibraryIcon, Pencil, ShieldCheck, Trash2, Upload } from "lucide-react";
+import { FileArchive, FolderInput, FolderOpen, Library as LibraryIcon, Pencil, ShieldCheck, Trash2, Upload } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import type { Page } from "../App";
 import { useToast } from "../components/toast";
@@ -55,6 +55,20 @@ export function LibraryPage({
         </div>
         <span className="spacer" />
         {extraToolbar}
+        <Button
+          icon={<FolderInput size={16} />}
+          onClick={() =>
+            run(async () => {
+              const j = await call<Job | null>("import_bundle");
+              if (j) {
+                upsertJob(j);
+                toast(t("library.importStarted"));
+              }
+            })
+          }
+        >
+          {t("library.import")}
+        </Button>
         <Button icon={<FolderOpen size={16} />} onClick={() => run(() => call("library_open_folder"))}>
           {t("common.openFolder")}
         </Button>
@@ -82,7 +96,14 @@ export function LibraryPage({
             icon={<LibraryIcon size={40} />}
             title={t("library.empty.title")}
             body={t("library.empty.body")}
-            action={<Button variant="primary" onClick={() => onNavigate("apps")}>{t("library.goApps")}</Button>}
+            action={
+              <>
+                <Button variant="primary" onClick={() => onNavigate("apps")}>{t("library.goApps")}</Button>
+                <Button icon={<FolderInput size={16} />} onClick={() => run(async () => { const j = await call<Job | null>("import_bundle"); if (j) upsertJob(j); })}>
+                  {t("library.import")}
+                </Button>
+              </>
+            }
           />
         </Card>
       ) : (
@@ -120,6 +141,9 @@ export function LibraryPage({
                 )}
                 {extraActions?.(item)}
                 <span className="spacer" />
+                <Button size="sm" variant="ghost" icon={<FileArchive size={15} />} aria-label={t("library.export")} title={t("library.export")}
+                  disabled={item.status !== "complete"}
+                  onClick={() => run(async () => { const j = await call<Job | null>("export_bundle", item.id); if (j) { upsertJob(j); toast(t("library.exportStarted")); } })} />
                 <Button size="sm" variant="ghost" icon={<ShieldCheck size={15} />} aria-label={t("library.verify")} title={t("library.verify")}
                   disabled={item.status !== "complete"}
                   onClick={() => run(async () => { upsertJob(await call<Job>("start_verify", item.id)); toast(t("library.verifyStarted")); })} />

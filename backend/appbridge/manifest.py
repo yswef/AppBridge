@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -14,6 +15,7 @@ FORMAT = "appbridge-manifest"
 FORMAT_VERSION = 1
 MANIFEST_NAME = "manifest.json"
 KINDS = ("apk", "obb", "data")
+PACKAGE_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z0-9_]+)+$")
 
 
 def now_iso() -> str:
@@ -59,6 +61,8 @@ def validate(m: dict) -> dict:
         raise AppBridgeError("INVALID_BUNDLE", "manifest created by a newer AppBridge")
     if not m.get("package") or not isinstance(m.get("files"), list):
         raise AppBridgeError("INVALID_BUNDLE", "manifest missing package or files")
+    if not PACKAGE_RE.match(str(m["package"])):
+        raise AppBridgeError("INVALID_BUNDLE", "invalid package name")
     for f in m["files"]:
         if f.get("kind") not in KINDS:
             raise AppBridgeError("INVALID_BUNDLE", f"bad file kind {f.get('kind')}")

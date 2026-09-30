@@ -233,4 +233,11 @@ export const ar: Dict = {
   "library.verify": "فحص السلامة",
   "library.verifyStarted": "بدأ فحص السلامة.",
   "tasks.done.verify": "كل الملفات سليمة (بصمة SHA-256 مطابقة) وكل أجزاء APK تحمل التوقيع نفسه.",
+  "library.export": "تصدير حزمة",
+  "library.exportStarted": "بدأ التصدير.",
+  "library.import": "استيراد حزمة",
+  "library.importStarted": "بدأ الاستيراد.",
+  "tasks.done.export": "تم حفظ الحزمة:",
+  "tasks.done.import": "تم الاستيراد إلى المكتبة.",
+  "tasks.showFile": "عرض الملف",
 };

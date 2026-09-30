@@ -222,6 +222,13 @@ export const mockApi = {
     const it = library.find((x) => x.id === id)!;
     return ok(newJob("verify", it.package, "", it.size, it.display_name));
   },
+  export_bundle: (id: number) => {
+    const it = library.find((x) => x.id === id)!;
+    const j = newJob("export", it.package, "", it.size, it.display_name);
+    j.result = { files: ["C:\\Users\\me\\Desktop\\WhatsApp 2.24.21.6.appbridge"] };
+    return ok(j);
+  },
+  import_bundle: () => ok(newJob("import", "com.dts.freefireth", "", 4_400_000_000, "Free Fire 1.104.1.appbridge")),
   library_list: () => ok({ root: settings.library_dir, items: library }),
   library_rename: (id: number, name: string) => {
     const it = library.find((x) => x.id === id)!;

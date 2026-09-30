@@ -121,8 +121,24 @@ export function JobCard({ job, compact }: { job: Job; compact?: boolean }) {
         </details>
       )}
 
-      {job.state === "completed" && job.kind in { extract: 1, install: 1, verify: 1 } && (
-        <Alert tone="ok">{t(`tasks.done.${job.kind}` as TKey)}</Alert>
+      {job.state === "completed" && (
+        <Alert
+          tone="ok"
+          action={
+            job.kind === "export" && Array.isArray(job.result?.files) ? (
+              <Button size="sm" onClick={() => call("open_path", (job.result!.files as string[])[0]).catch(() => {})}>
+                {t("tasks.showFile")}
+              </Button>
+            ) : undefined
+          }
+        >
+          {t(`tasks.done.${job.kind}` as TKey)}
+          {job.kind === "export" && Array.isArray(job.result?.files) && (
+            <div className="mono ltr small" style={{ textAlign: "start", wordBreak: "break-all" }}>
+              {(job.result!.files as string[]).join("\n")}
+            </div>
+          )}
+        </Alert>
       )}
 
       <div className="row" style={{ justifyContent: "flex-end" }}>

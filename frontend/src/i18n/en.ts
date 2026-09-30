@@ -231,6 +231,13 @@ export const en = {
   "library.verify": "Verify integrity",
   "library.verifyStarted": "Integrity check started.",
   "tasks.done.verify": "All files are intact (SHA-256 matches) and all APK parts share the same signature.",
+  "library.export": "Export bundle",
+  "library.exportStarted": "Export started.",
+  "library.import": "Import bundle",
+  "library.importStarted": "Import started.",
+  "tasks.done.export": "Bundle saved:",
+  "tasks.done.import": "Imported into the library.",
+  "tasks.showFile": "Show file",
 };
 
 export type Dict = typeof en;

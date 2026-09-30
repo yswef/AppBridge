@@ -16,6 +16,7 @@ from pathlib import Path
 
 from . import APP_NAME, __version__, errors, logging_setup, paths, verify
 from .adb import Adb
+from .bundle import EXT, ExportJob, ImportJob, default_bundle_name
 from .devices import DeviceMonitor
 from .events import EventBus
 from .extractor import ExtractJob
@@ -392,5 +393,30 @@ class Api:
     @api_method
     def start_verify(self, item_id: int):
         job = verify.VerifyJob.create(self._library, int(item_id))
+        self._jobs.submit(job)
+        return job.to_dict()
+
+    # -- bundles -----------------------------------------------------------------------------
+
+    @api_method
+    def export_bundle(self, item_id: int, dest: str | None = None):
+        item_id = int(item_id)
+        row = self._library.item(item_id)
+        if not dest:
+            dest = self._save_dialog(default_bundle_name(row), (f"AppBridge bundle (*{EXT})",))
+            if not dest:
+                return None
+        s = self._settings.settings
+        job = ExportJob(self._library, item_id, Path(dest), s.split_size_mb, s.include_install_bat)
+        self._jobs.submit(job)
+        return job.to_dict()
+
+    @api_method
+    def import_bundle(self, path: str | None = None):
+        if not path:
+            path = self._open_dialog((f"AppBridge bundle (*{EXT};*{EXT}.001)", "All files (*.*)"))
+            if not path:
+                return None
+        job = ImportJob(self._library, Path(path))
         self._jobs.submit(job)
         return job.to_dict()

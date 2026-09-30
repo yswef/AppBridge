@@ -39,6 +39,11 @@ def main() -> int:
     )
     api._attach_window(window)
     window.events.closed += api._shutdown
+
+    # Opening a .appbridge file with AppBridge (file association) imports it in one click.
+    bundle_arg = next((a for a in sys.argv[1:] if ".appbridge" in a.lower() and Path(a).exists()), None)
+    if bundle_arg:
+        window.events.loaded += lambda: api.import_bundle(bundle_arg)
     try:
         webview.start(
             debug=bool(os.environ.get("APPBRIDGE_DEBUG")),
